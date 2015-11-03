@@ -39,7 +39,7 @@ char** getInput() {
 	char* word = calloc(1, sizeof(char));
 	assert(word!=NULL);
 	char c = '\0';
-	while (c != '\n')
+	while (c != '\n' || k>1)
 	{
 		c = getchar();
 		if (c == ' ' && word != '\0') {
@@ -49,18 +49,20 @@ char** getInput() {
 			assert(word!=NULL);
 			j = 1, i = 0;
 			continue;
+
 		}
 		else if (c == ' ') {
 			continue;
 		}
-		j++;
-		word = (char*)realloc(word, j*sizeof(char));
+		word = (char*)realloc(word, (++j)*sizeof(char));
 		assert(word!=NULL);
 		word[i] = c;
 		i++;
 	}
-	word[i - 1] = '\0';
-	input[k] = word;
+	if (k<1) {
+		word[i - 1] = '\0';
+		input[k] = word;
+	}
 	return input;
 
 }
@@ -135,8 +137,8 @@ int main(int argc , char** argv){
 		}
 		else {
 			printf("Your turn:");
-			char input[2] = getInput();
-			if (input[0]=='Q'){
+			char * input[INPUT_SIZE]=getInput();
+			if (input[0]=="Q"){
 				free(input[0]);
 				free(input[1]);
 				break;
@@ -144,9 +146,7 @@ int main(int argc , char** argv){
 			//sending the move to the server
 			c_msg.heap_name=*input[0];
 			c_msg.num_cubes_to_remove=(short) strtol(input[1],NULL,2);
-			char buffer[sizeof(c_msg)] ;
-			memcpy(buffer,(char *) c_msg,sizeof(c_msg));
-			if (sendall(sockfd,buffer,sizeof(c_msg))<0){
+			if (sendall(sockfd,(void *)c_msg,sizeof(c_msg))<0){
 				fprintf(stderr, "Client:failed to write to server\n");
 				free(input[0]);
 				free(input[1]);
