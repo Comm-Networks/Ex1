@@ -2,15 +2,15 @@
 #include <stdlib.h>
 
 
-int recall(int sockfd,void* buff,unsigned int *len){
+int recvall(int sockfd,void* buff,unsigned int *len){
 	int total = 0; /* how many bytes we've read */
 	int bytesleft = *len; /* how many we have left to read */
 	int n;
 	while(total < *len) {
-	   n = recv(sockfd, buff+total, bytesleft, 0);
-	   if (n == -1) { break; }
-	   total += n;
-	   bytesleft -= n;
+		n = recv(sockfd, buff+total, bytesleft, 0);
+		if (n == -1) { break; }
+		total += n;
+		bytesleft -= n;
 	}
 	*len = total; /* return number actually read here */
 	return n == -1 ? -1:0; /*-1 on failure, 0 on success */
@@ -21,10 +21,10 @@ int sendall(int sockfd,void* buff,unsigned int *len){
 	int bytesleft = *len; /* how many we have left to send */
 	int n;
 	while(total < *len) {
-	   n = send(sockfd, buff+total, bytesleft, 0);
-	   if (n == -1) { break; }
-	   total += n;
-	   bytesleft -= n;
+		n = send(sockfd, buff+total, bytesleft, 0);
+		if (n == -1) { break; }
+		total += n;
+		bytesleft -= n;
 	}
 	*len = total; /* return number actually sent here */
 	return n == -1 ? -1:0; /*-1 on failure, 0 on success */
@@ -68,7 +68,7 @@ int main(int argc , char** argv) {
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(port);
 
-	  /* resolve hostname */
+	/* resolve hostname */
 	struct hostent* host;
 	if ((host = gethostbyname(hostname)) == NULL) {
 		// Error.
@@ -103,19 +103,21 @@ int main(int argc , char** argv) {
 		}
 
 		size = sizeof(c_msg);
-		result = recall(new_sock, &c_msg, &size);
+		result = recvall(new_sock, &c_msg, &size);
 		if (result < 0) {
 			// Error.
 		}
 
+		printf("Move: %c %d\n", c_msg.heap_name, c_msg.num_cubes_to_remove);
+
 		// Do move.
 		am_msg.legal = 'g';
 		if (c_msg.num_cubes_to_remove > 0) {
-			if ((c_msg.heap_name == 'a') && (c_msg.num_cubes_to_remove <= s_msg.n_a)) {
+			if ((c_msg.heap_name == 'A') && (c_msg.num_cubes_to_remove <= s_msg.n_a)) {
 				s_msg.n_a = s_msg.n_a - c_msg.num_cubes_to_remove;
-			} else if ((c_msg.heap_name == 'b') && (c_msg.num_cubes_to_remove <= s_msg.n_b)) {
+			} else if ((c_msg.heap_name == 'B') && (c_msg.num_cubes_to_remove <= s_msg.n_b)) {
 				s_msg.n_b = s_msg.n_b - c_msg.num_cubes_to_remove;
-			} else if ((c_msg.heap_name == 'c') && (c_msg.num_cubes_to_remove <= s_msg.n_c)) {
+			} else if ((c_msg.heap_name == 'C') && (c_msg.num_cubes_to_remove <= s_msg.n_c)) {
 				s_msg.n_c = s_msg.n_c - c_msg.num_cubes_to_remove;
 			} else {
 				// Illegal move (trying to get more cubes than available).
@@ -132,29 +134,27 @@ int main(int argc , char** argv) {
 			// Error.
 		}
 
-		if (am_msg.legal == 'g') {
-			// Client made a legal move, check if he won.
-			if ((s_msg.n_a == 0) && (s_msg.n_b == 0) && (s_msg.n_c == 0)) {
-				// Client won.
-				s_msg.winner = 'c'; // Letting the client know.
+		// Checking if client won.
+		if ((s_msg.n_a == 0) && (s_msg.n_b == 0) && (s_msg.n_c == 0)) {
+			// Client won.
+			s_msg.winner = 'c'; // Letting the client know.
+
+		} else {
+			// Making server move.
+			if ((s_msg.n_a >= s_msg.n_b) && (s_msg.n_a >= s_msg.n_c)) {
+				s_msg.n_a = s_msg.n_a - 1;
+
+			} else if ((s_msg.n_b >= s_msg.n_c)) {
+				s_msg.n_b = s_msg.n_b - 1;
 
 			} else {
-				// Making server move.
-				if ((s_msg.n_a >= s_msg.n_b) && (s_msg.n_a >= s_msg.n_c)) {
-					s_msg.n_a = s_msg.n_a - 1;
+				s_msg.n_c = s_msg.n_c - 1;
+			}
 
-				} else if ((s_msg.n_b >= s_msg.n_c)) {
-					s_msg.n_b = s_msg.n_b - 1;
-
-				} else {
-					s_msg.n_c = s_msg.n_c - 1;
-				}
-
-				// Checking if server won.
-				if ((s_msg.n_a == 0) && (s_msg.n_b == 0) && (s_msg.n_c == 0)) {
-					// Server won.
-					s_msg.winner = 's'; // Letting the client know.
-				}
+			// Checking if server won.
+			if ((s_msg.n_a == 0) && (s_msg.n_b == 0) && (s_msg.n_c == 0)) {
+				// Server won.
+				s_msg.winner = 's'; // Letting the client know.
 			}
 		}
 	}

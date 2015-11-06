@@ -1,8 +1,10 @@
 #include "nm_protocol.h"
+#include <assert.h>
+#include <stdlib.h>
 
 #define INPUT_SIZE 2
 
-int recall(int sockfd,void* buff,int *len){
+int recvall(int sockfd,void* buff,int *len){
 	int total = 0; /* how many bytes we've read */
 	int bytesleft = *len; /* how many we have left to read */
 	int n;
@@ -73,7 +75,9 @@ int main(int argc , char** argv){
 	struct addrinfo  hints;
 	struct addrinfo * dest_addr , *rp;
 	int sockfd;
-	int i;
+	int size;
+	char pile;
+	short number;
 	client_msg c_msg;
 	server_msg s_msg;
 	after_move_msg am_msg;
@@ -110,7 +114,7 @@ int main(int argc , char** argv){
 		if (connect(sockfd,dest_addr->ai_addr,dest_addr->ai_addrlen)!=-1){
 			break ; //successfuly connected
 		}
-		close(sockfd);
+		//close(sockfd);
 	}
 	// No address succeeded
 	 if (rp == NULL) {
@@ -120,15 +124,18 @@ int main(int argc , char** argv){
 	    }
 	freeaddrinfo(dest_addr);
 
+	printf("Here!\n");
+
 	for (;;) {
 
 		//getting heap info and winner info from server
-		if (recvall(sockfd,(void *) s_msg,sizeof(server_msg))<0){
+		size = sizeof(server_msg);
+		if (recvall(sockfd,(void *)&s_msg, &size)<0){
 			fprintf(stderr, "Client:failed to read from server\n");
 			close(sockfd);
 			exit(1);
 		}
-		printf("Heap A: %d\nHeap B: %d\nHeap C: %d\n",s_msg.n_a,s_msg.n_b,s_msg.n_c);
+		printf("Heap A: %d\nHeap B: %d\nHeap C: %d\n", s_msg.n_a, s_msg.n_b, s_msg.n_c);
 
 		if (s_msg.winner!='n') {
 			char * winner = s_msg.winner=='c' ? "You" : "Server" ;
@@ -136,35 +143,38 @@ int main(int argc , char** argv){
 			break;
 		}
 		else {
-			printf("Your turn:");
-			char * input[INPUT_SIZE]=getInput();
-			if (input[0]=="Q"){
-				free(input[0]);
-				free(input[1]);
-				break;
-			}
+			printf("Your turn:\n");
+			scanf("%c %d", &pile, &number);
+//			char * input=getInput();
+//			if (input[0]=="Q"){
+//				free(input[0]);
+//				free(input[1]);
+//				break;
+//			}
 			//sending the move to the server
-			c_msg.heap_name=*input[0];
-			c_msg.num_cubes_to_remove=(short) strtol(input[1],NULL,2);
-			if (sendall(sockfd,(void *)c_msg,sizeof(c_msg))<0){
+			c_msg.heap_name=pile;
+			c_msg.num_cubes_to_remove=number;
+			size = sizeof(c_msg);
+			if (sendall(sockfd,(void *)&c_msg,&size)<0){
 				fprintf(stderr, "Client:failed to write to server\n");
-				free(input[0]);
-				free(input[1]);
+//				free(input[0]);
+//				free(input[1]);
 				break;
 			}
 			//reciving from server a message if that was a legal move or not
-			if (recvall(sockfd,(void *) am_msg,sizeof(am_msg))<0){
+			size = sizeof(am_msg);
+			if (recvall(sockfd,(void *)&am_msg,&size)<0){
 				fprintf(stderr, "Client:failed to read from server\n");
-				free(input[0]);
-				free(input[1]);
+//				free(input[0]);
+//				free(input[1]);
 				break;
 			}
 			char * msg = am_msg.legal=='b' ? "Illegal move\n" : "Move accepted\n";
 			printf("%s",msg);
-			free(input[0]);
-			free(input[1]);
+//			free(input[0]);
+//			free(input[1]);
 		}
 	}
-	close(sockfd);
+	//close(sockfd);
 	return 0;
 }
