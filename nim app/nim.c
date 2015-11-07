@@ -32,42 +32,7 @@ int sendall(int sockfd,void* buff,int *len){
 	return n == -1 ? -1:0; /*-1 on failure, 0 on success */
 }
 
-/*
-* Recieving an input as 2 word string array
-*/
-char** getInput() {
-	char * input[INPUT_SIZE];
-	int i = 0, j = 1, k = 0;
-	char* word = calloc(1, sizeof(char));
-	assert(word!=NULL);
-	char c = '\0';
-	while (c != '\n' || k>1)
-	{
-		c = getchar();
-		if (c == ' ' && word != '\0') {
-			word[i] = '\0';
-			input[k++] = word;
-			word = calloc(1, sizeof(char));
-			assert(word!=NULL);
-			j = 1, i = 0;
-			continue;
 
-		}
-		else if (c == ' ') {
-			continue;
-		}
-		word = (char*)realloc(word, (++j)*sizeof(char));
-		assert(word!=NULL);
-		word[i] = c;
-		i++;
-	}
-	if (k<1) {
-		word[i - 1] = '\0';
-		input[k] = word;
-	}
-	return input;
-
-}
 
 int main(int argc , char** argv){
 	char * hostname = "localhost";
@@ -98,7 +63,7 @@ int main(int argc , char** argv){
 	int status =getaddrinfo(hostname,port,&hints,&dest_addr);
 	if (status!=0){
 		 printf("getaddrinfo error: %s\n", strerror(status));
-		 exit(1);
+		 return 1;
 	}
 
 	// loop through all the results and connect to the first we can
@@ -111,10 +76,10 @@ int main(int argc , char** argv){
 		if (sockfd==-1) {
 			continue;
 		}
-		if (connect(sockfd,dest_addr->ai_addr,dest_addr->ai_addrlen)!=-1){
+		if (connect(sockfd,rp->ai_addr,rp->ai_addrlen)!=-1){
 			break ; //successfuly connected
 		}
-		//close(sockfd);
+		close(sockfd);
 	}
 	// No address succeeded
 	 if (rp == NULL) {
@@ -145,36 +110,29 @@ int main(int argc , char** argv){
 		else {
 			printf("Your turn:\n");
 			scanf(" %c %hd", &pile, &number); // Space before %c is to consume the newline char from the previous scanf.
-//			char * input=getInput();
-//			if (input[0]=="Q"){
-//				free(input[0]);
-//				free(input[1]);
-//				break;
-//			}
+			if (pile=='Q'){
+				break;
+			}
 			//sending the move to the server
 			c_msg.heap_name=pile;
 			c_msg.num_cubes_to_remove=number;
 			size = sizeof(c_msg);
 			if (sendall(sockfd,(void *)&c_msg,&size)<0){
 				fprintf(stderr, "Client:failed to write to server\n");
-//				free(input[0]);
-//				free(input[1]);
 				break;
 			}
-			//reciving from server a message if that was a legal move or not
+			//receiving from server a message if that was a legal move or not
 			size = sizeof(am_msg);
 			if (recvall(sockfd,(void *)&am_msg,&size)<0){
 				fprintf(stderr, "Client:failed to read from server\n");
-//				free(input[0]);
-//				free(input[1]);
 				break;
 			}
 			char * msg = am_msg.legal=='b' ? "Illegal move\n" : "Move accepted\n";
 			printf("%s",msg);
-//			free(input[0]);
-//			free(input[1]);
+
 		}
 	}
-	//close(sockfd);
+
+	close(sockfd);
 	return 0;
 }

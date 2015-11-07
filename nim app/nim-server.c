@@ -30,6 +30,11 @@ int sendall(int sockfd,void* buff,unsigned int *len){
 	return n == -1 ? -1:0; /*-1 on failure, 0 on success */
 }
 
+//check if all piles are empty
+int empty_piles(int n_a,int n_b,int n_c) {
+	return (n_a == 0) && (n_b == 0) && (n_c == 0);
+}
+
 int main(int argc , char** argv) {
 	const char hostname[] = "localhost";
 	int port = 6444;
@@ -40,11 +45,13 @@ int main(int argc , char** argv) {
 	client_msg c_msg;
 	server_msg s_msg;
 	after_move_msg am_msg;
-
+	struct addrinfo  hints;
+	struct addrinfo * my_addr , *rp;
+	struct sockaddr_in client_adrr;
 
 	if (argc < 4) {
 		// Error.
-		return -1;
+		return 1;
 	}
 
 	// Initializing piles.
@@ -59,71 +66,119 @@ int main(int argc , char** argv) {
 		port = (int)strtol(argv[4], NULL, 10);
 	}
 
-	// Initializing socket.
-	sockfd = socket(PF_INET, SOCK_STREAM, 0);
 
+
+	// Obtain address(es) matching host/port
+	memset(&hints,0,sizeof(struct addrinfo));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+	hints.ai_protocol = 0;
+	int status =getaddrinfo(hostname,port,&hints,&my_addr);
+	if (status!=0){
+		 printf("getaddrinfo error: %s\n", strerror(status));
+		 return 1;
+	}
+
+	// loop through all the results and connect to the first we can
+	for (rp=my_addr ; rp!=NULL ; rp=rp->ai_next){
+		if (rp->ai_family!=PF_INET) {
+			continue;
+		}
+		//opening a new socket
+		sockfd = socket(hints.ai_family,hints.ai_socktype,hints.ai_protocol);
+		if (sockfd==-1) {
+			continue;
+		}
+		if (bind(sockfd,rp->ai_addr,rp->ai_addrlen)!=-1){
+			break ; //successfuly binded
+		}
+		close(sockfd);
+	}
+	// No address succeeded
+	 if (rp == NULL) {
+	        fprintf(stderr, "Server:failed to bind\n");
+	        close(sockfd);
+	        return 1;
+	    }
+	freeaddrinfo(my_addr);
+
+	if (listen(sockfd, 5)==-1) {
+		println("problem while listening for an incoming call : %s\n",strerror(errno));
+		close(sockfd);
+		return 1;
+	}
+
+	size = sizeof(struct sockaddr_in);
+	int new_sock = accept(sockfd, (struct sockaddr*)&client_adrr, &size);
+	if (new_sock < 0) {
+		println("problem while trying to accept incoming call : %s\n",strerror(errno));
+		close(sockfd);
+		return 1;
+	}
+	/*
 	struct sockaddr_in my_addr,client_adrr;
-
 
 	my_addr.sin_family = AF_INET;
 	my_addr.sin_port = htons(port);
 
-	/* resolve hostname */
+	 //resolve hostname
 	struct hostent* host;
 	if ((host = gethostbyname(hostname)) == NULL) {
 		// Error.
-		return -1;
+		return 1;
 	}
 	memcpy(&my_addr.sin_addr, host->h_addr_list[0], host->h_length);
 
 	size = sizeof(my_addr);
 	bind(sockfd, (const struct sockaddr*)&my_addr, size);
 
-	listen(sockfd, 5);
 
-	size = sizeof(struct sockaddr_in);
-	int new_sock = accept(sockfd, (struct sockaddr*)&client_adrr, &size);
-	if (new_sock < 0) {
-		// Error.
-	}
+	}*/
 
 	int result;
 
 	// Message loop.
-	while (1) {
+	for (;;) {
 		size = sizeof(s_msg);
 		result = sendall(new_sock, &s_msg, &size);
 		if (result < 0) {
-			// Error.
+			fprintf(stderr, "Server:failed to send to client\n");
+			break;
 		}
 
 		// Ending loop if we had a winner in previous iteration.
 		if (s_msg.winner != 'n') {
-			return 0;
+			break;
 		}
 
 		size = sizeof(c_msg);
 		result = recvall(new_sock, &c_msg, &size);
 		if (result < 0) {
-			// Error.
+			fprintf(stderr, "Server:failed to send to client\n");
+			break;
 		}
 
-		printf("Move: %c %d\n", c_msg.heap_name, c_msg.num_cubes_to_remove);
+		//printf("Move: %c %d\n", c_msg.heap_name, c_msg.num_cubes_to_remove);
 
 		// Do move.
 		am_msg.legal = 'g';
 		if (c_msg.num_cubes_to_remove > 0) {
 			if ((c_msg.heap_name == 'A') && (c_msg.num_cubes_to_remove <= s_msg.n_a)) {
-				s_msg.n_a = s_msg.n_a - c_msg.num_cubes_to_remove;
-			} else if ((c_msg.heap_name == 'B') && (c_msg.num_cubes_to_remove <= s_msg.n_b)) {
-				s_msg.n_b = s_msg.n_b - c_msg.num_cubes_to_remove;
-			} else if ((c_msg.heap_name == 'C') && (c_msg.num_cubes_to_remove <= s_msg.n_c)) {
-				s_msg.n_c = s_msg.n_c - c_msg.num_cubes_to_remove;
-			} else {
+				s_msg.n_a -= c_msg.num_cubes_to_remove;
+			}
+			else if ((c_msg.heap_name == 'B') && (c_msg.num_cubes_to_remove <= s_msg.n_b)) {
+				s_msg.n_b -= c_msg.num_cubes_to_remove;
+			}
+			else if ((c_msg.heap_name == 'C') && (c_msg.num_cubes_to_remove <= s_msg.n_c)) {
+				s_msg.n_c -= c_msg.num_cubes_to_remove;
+			}
+			else {
 				// Illegal move (trying to get more cubes than available).
 				am_msg.legal = 'b';
 			}
-		} else {
+		}
+		else {
 			// Illegal move (number of cubes to remove not positive).
 			am_msg.legal = 'b';
 		}
@@ -131,32 +186,37 @@ int main(int argc , char** argv) {
 		size = sizeof(am_msg);
 		result = sendall(new_sock, &am_msg, &size);
 		if (result < 0) {
-			// Error.
+			fprintf(stderr, "Server:failed to send to client\n");
+			break;
 		}
 
 		// Checking if client won.
-		if ((s_msg.n_a == 0) && (s_msg.n_b == 0) && (s_msg.n_c == 0)) {
+		if (empty_piles(s_msg.n_a,s_msg.n_b,s_msg.n_c)) {
 			// Client won.
 			s_msg.winner = 'c'; // Letting the client know.
 
-		} else {
+		}
+		else {
 			// Making server move.
 			if ((s_msg.n_a >= s_msg.n_b) && (s_msg.n_a >= s_msg.n_c)) {
-				s_msg.n_a = s_msg.n_a - 1;
+				s_msg.n_a--;
 
 			} else if ((s_msg.n_b >= s_msg.n_c)) {
-				s_msg.n_b = s_msg.n_b - 1;
+				s_msg.n_b--;
 
 			} else {
-				s_msg.n_c = s_msg.n_c - 1;
+				s_msg.n_c--;
 			}
 
 			// Checking if server won.
-			if ((s_msg.n_a == 0) && (s_msg.n_b == 0) && (s_msg.n_c == 0)) {
+			if (empty_piles(s_msg.n_a,s_msg.n_b,s_msg.n_c)) {
 				// Server won.
 				s_msg.winner = 's'; // Letting the client know.
 			}
 		}
 	}
+	close(sockfd);
+	close(new_sock);
+	return result<0 ? 1:0;
 }
 

@@ -29,3 +29,9 @@
 		char legal ; // g - good b- illegal
 	}after_move_msg;
 #pragma pack(pop)
+
+#pragma pack(push,1)
+	typedef struct {
+		char close ;
+	}close_msg;
+#pragma pack(pop)
