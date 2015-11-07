@@ -116,7 +116,21 @@ int main(int argc , char** argv){
 					fprintf(stderr, "Client:failed to write to server\n");
 					break;
 				}
-				break;
+				// Shutting down connection.
+				shutdown(sockfd, SHUT_WR);
+				char buf[1];
+				int shutdown_res = recv(sockfd, buf, 1, 0);
+		        if (shutdown_res < 0) {
+					fprintf(stderr, "Client:failed to write to server\n");
+		            exit(1);
+		        } else if (!shutdown_res) {
+		        	close(sockfd);
+		        	exit(0);
+
+		        } else {
+		        	// Will not reach as the server will not send anything at this point.
+		        	break;
+		        }
 			}
 			//sending the move to the server
 			c_msg.heap_name=pile;
