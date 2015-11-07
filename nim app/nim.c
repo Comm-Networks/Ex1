@@ -129,7 +129,7 @@ int main(int argc , char** argv){
 	for (;;) {
 
 		//getting heap info and winner info from server
-		size = sizeof(server_msg);
+		size = sizeof(s_msg);
 		if (recvall(sockfd,(void *)&s_msg, &size)<0){
 			fprintf(stderr, "Client:failed to read from server\n");
 			close(sockfd);
@@ -144,7 +144,7 @@ int main(int argc , char** argv){
 		}
 		else {
 			printf("Your turn:\n");
-			scanf("%c %d", &pile, &number);
+			scanf(" %c %hd", &pile, &number); // Space before %c is to consume the newline char from the previous scanf.
 //			char * input=getInput();
 //			if (input[0]=="Q"){
 //				free(input[0]);
