@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <unistd.h>
 
 //message from the server - start of a turn
 #pragma pack(push, 1)

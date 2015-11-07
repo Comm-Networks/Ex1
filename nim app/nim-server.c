@@ -37,7 +37,7 @@ int empty_piles(int n_a,int n_b,int n_c) {
 
 int main(int argc , char** argv) {
 	const char hostname[] = "localhost";
-	int port = 6444;
+	char* port = "6444";
 
 	int sockfd;
 	unsigned int size;
@@ -63,7 +63,7 @@ int main(int argc , char** argv) {
 	printf("%d %d %d\n", s_msg.n_a, s_msg.n_b, s_msg.n_c);
 
 	if (argc > 4) {
-		port = (int)strtol(argv[4], NULL, 10);
+		port = argv[4];
 	}
 
 
@@ -74,7 +74,7 @@ int main(int argc , char** argv) {
 	hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
 	hints.ai_protocol = 0;
-	int status =getaddrinfo(hostname,port,&hints,&my_addr);
+	int status = getaddrinfo(hostname,port,&hints,&my_addr);
 	if (status!=0){
 		 printf("getaddrinfo error: %s\n", strerror(status));
 		 return 1;
@@ -104,7 +104,7 @@ int main(int argc , char** argv) {
 	freeaddrinfo(my_addr);
 
 	if (listen(sockfd, 5)==-1) {
-		println("problem while listening for an incoming call : %s\n",strerror(errno));
+		printf("problem while listening for an incoming call : %s\n",strerror(errno));
 		close(sockfd);
 		return 1;
 	}
@@ -112,7 +112,7 @@ int main(int argc , char** argv) {
 	size = sizeof(struct sockaddr_in);
 	int new_sock = accept(sockfd, (struct sockaddr*)&client_adrr, &size);
 	if (new_sock < 0) {
-		println("problem while trying to accept incoming call : %s\n",strerror(errno));
+		printf("problem while trying to accept incoming call : %s\n",strerror(errno));
 		close(sockfd);
 		return 1;
 	}
