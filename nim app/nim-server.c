@@ -136,13 +136,13 @@ int main(int argc , char** argv) {
 
 	}*/
 
-	int result;
+	int ret_val=0;
 
 	// Message loop.
 	for (;;) {
 		size = sizeof(s_msg);
-		result = sendall(new_sock, &s_msg, &size);
-		if (result < 0) {
+		ret_val = sendall(new_sock, &s_msg, &size);
+		if (ret_val < 0) {
 			fprintf(stderr, "Server:failed to send to client\n");
 			break;
 		}
@@ -153,14 +153,14 @@ int main(int argc , char** argv) {
 		}
 
 		size = sizeof(c_msg);
-		result = recvall(new_sock, &c_msg, &size);
-		if (result < 0) {
+		if ((ret_val = recvall(new_sock, &c_msg, &size)) < 0) {
 			fprintf(stderr, "Server:failed to send to client\n");
 			break;
 		}
 
-		//printf("Move: %c %d\n", c_msg.heap_name, c_msg.num_cubes_to_remove);
-
+		if (c_msg.heap_name=='Q'){
+			break;
+		}
 		// Do move.
 		am_msg.legal = 'g';
 		if (c_msg.num_cubes_to_remove > 0) {
@@ -184,8 +184,7 @@ int main(int argc , char** argv) {
 		}
 
 		size = sizeof(am_msg);
-		result = sendall(new_sock, &am_msg, &size);
-		if (result < 0) {
+		if ((ret_val=sendall(new_sock, &am_msg, &size)) < 0) {
 			fprintf(stderr, "Server:failed to send to client\n");
 			break;
 		}
@@ -217,6 +216,6 @@ int main(int argc , char** argv) {
 	}
 	close(sockfd);
 	close(new_sock);
-	return result<0 ? 1:0;
+	return ret_val==0 ? 0 : 1;
 }
 

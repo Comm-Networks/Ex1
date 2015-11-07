@@ -90,15 +90,14 @@ int main(int argc , char** argv){
 	freeaddrinfo(dest_addr);
 
 	printf("Here!\n");
-
+	int ret_val=0;
 	for (;;) {
 
 		//getting heap info and winner info from server
 		size = sizeof(s_msg);
-		if (recvall(sockfd,(void *)&s_msg, &size)<0){
+		if ((ret_val=recvall(sockfd,(void *)&s_msg, &size))<0){
 			fprintf(stderr, "Client:failed to read from server\n");
-			close(sockfd);
-			exit(1);
+			break;
 		}
 		printf("Heap A: %d\nHeap B: %d\nHeap C: %d\n", s_msg.n_a, s_msg.n_b, s_msg.n_c);
 
@@ -111,19 +110,26 @@ int main(int argc , char** argv){
 			printf("Your turn:\n");
 			scanf(" %c %hd", &pile, &number); // Space before %c is to consume the newline char from the previous scanf.
 			if (pile=='Q'){
+				c_msg.heap_name=pile;
+				c_msg.num_cubes_to_remove=0;
+				//letting the server know we close the socket
+				if ((ret_val=sendall(sockfd,(void *)&c_msg,&size))<0){
+					fprintf(stderr, "Client:failed to write to server\n");
+					break;
+				}
 				break;
 			}
 			//sending the move to the server
 			c_msg.heap_name=pile;
 			c_msg.num_cubes_to_remove=number;
 			size = sizeof(c_msg);
-			if (sendall(sockfd,(void *)&c_msg,&size)<0){
+			if ((ret_val=sendall(sockfd,(void *)&c_msg,&size))<0){
 				fprintf(stderr, "Client:failed to write to server\n");
 				break;
 			}
 			//receiving from server a message if that was a legal move or not
 			size = sizeof(am_msg);
-			if (recvall(sockfd,(void *)&am_msg,&size)<0){
+			if ((ret_val=recvall(sockfd,(void *)&am_msg,&size)<0)){
 				fprintf(stderr, "Client:failed to read from server\n");
 				break;
 			}
@@ -134,5 +140,5 @@ int main(int argc , char** argv){
 	}
 
 	close(sockfd);
-	return 0;
+	return ret_val==0 ? 0 : 1;
 }
