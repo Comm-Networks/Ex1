@@ -1,6 +1,5 @@
-#include "nm_protocol.h"
-#include <assert.h>
-#include <stdlib.h>
+
+#include "nim_protocol.h"
 
 #define INPUT_SIZE 2
 

@@ -1,5 +1,5 @@
-#include "nm_protocol.h"
 #include <stdlib.h>
+#include "nim_protocol.h"
 
 
 int recvall(int sockfd,void* buff,unsigned int *len){
@@ -60,13 +60,9 @@ int main(int argc , char** argv) {
 	s_msg.n_c = (int)strtol(argv[3], NULL, 10);
 	s_msg.winner = 'n';
 
-	printf("%d %d %d\n", s_msg.n_a, s_msg.n_b, s_msg.n_c);
-
 	if (argc > 4) {
 		port = argv[4];
 	}
-
-
 
 	// Obtain address(es) matching host/port
 	memset(&hints,0,sizeof(struct addrinfo));
@@ -116,25 +112,6 @@ int main(int argc , char** argv) {
 		close(sockfd);
 		return 1;
 	}
-	/*
-	struct sockaddr_in my_addr,client_adrr;
-
-	my_addr.sin_family = AF_INET;
-	my_addr.sin_port = htons(port);
-
-	 //resolve hostname
-	struct hostent* host;
-	if ((host = gethostbyname(hostname)) == NULL) {
-		// Error.
-		return 1;
-	}
-	memcpy(&my_addr.sin_addr, host->h_addr_list[0], host->h_length);
-
-	size = sizeof(my_addr);
-	bind(sockfd, (const struct sockaddr*)&my_addr, size);
-
-
-	}*/
 
 	int ret_val=0;
 

@@ -3,7 +3,7 @@ CFLAGS=-Wall -g
 all: nim nim-server
 
 clean:
-	-rm nim.o nim-server.o nim nim-server
+	-rm -f nim.o nim-server.o nim nim-server
 
 nim: nim.o
 	gcc -o nim nim.o $(CFLAGS)
