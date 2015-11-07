@@ -8,6 +8,21 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+
+#define DEFAULT_HOST "localhost"
+#define DEFAULT_PORT "6444"
+#define PILE_A_CHAR 'A'
+#define PILE_B_CHAR 'B'
+#define PILE_C_CHAR 'C'
+#define QUIT_CHAR 'Q'
+#define SERVER_WIN 's'
+#define CLIENT_WIN 'c'
+#define NO_WIN 'n'
+#define MOVE_LEGAL 'g'
+#define MOVE_ILLEGAL 'b'
+
+
+
 //message from the server - start of a turn
 #pragma pack(push, 1)
 	typedef struct {

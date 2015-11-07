@@ -36,8 +36,8 @@ int empty_piles(int n_a,int n_b,int n_c) {
 }
 
 int main(int argc , char** argv) {
-	const char hostname[] = "localhost";
-	char* port = "6444";
+	const char hostname[] = DEFAULT_HOST;
+	char* port = DEFAULT_PORT;
 
 	int sockfd;
 	unsigned int size;
@@ -58,7 +58,7 @@ int main(int argc , char** argv) {
 	s_msg.n_a = (int)strtol(argv[1], NULL, 10);
 	s_msg.n_b = (int)strtol(argv[2], NULL, 10);
 	s_msg.n_c = (int)strtol(argv[3], NULL, 10);
-	s_msg.winner = 'n';
+	s_msg.winner = NO_WIN;
 
 	if (argc > 4) {
 		port = argv[4];
@@ -125,7 +125,7 @@ int main(int argc , char** argv) {
 		}
 
 		// Ending loop if we had a winner in previous iteration.
-		if (s_msg.winner != 'n') {
+		if (s_msg.winner != NO_WIN) {
 			break;
 		}
 
@@ -135,29 +135,29 @@ int main(int argc , char** argv) {
 			break;
 		}
 
-		if (c_msg.heap_name=='Q'){
+		if (c_msg.heap_name == QUIT_CHAR){
 			break;
 		}
 		// Do move.
-		am_msg.legal = 'g';
+		am_msg.legal = MOVE_LEGAL;
 		if (c_msg.num_cubes_to_remove > 0) {
-			if ((c_msg.heap_name == 'A') && (c_msg.num_cubes_to_remove <= s_msg.n_a)) {
+			if ((c_msg.heap_name == PILE_A_CHAR) && (c_msg.num_cubes_to_remove <= s_msg.n_a)) {
 				s_msg.n_a -= c_msg.num_cubes_to_remove;
 			}
-			else if ((c_msg.heap_name == 'B') && (c_msg.num_cubes_to_remove <= s_msg.n_b)) {
+			else if ((c_msg.heap_name == PILE_B_CHAR) && (c_msg.num_cubes_to_remove <= s_msg.n_b)) {
 				s_msg.n_b -= c_msg.num_cubes_to_remove;
 			}
-			else if ((c_msg.heap_name == 'C') && (c_msg.num_cubes_to_remove <= s_msg.n_c)) {
+			else if ((c_msg.heap_name == PILE_C_CHAR) && (c_msg.num_cubes_to_remove <= s_msg.n_c)) {
 				s_msg.n_c -= c_msg.num_cubes_to_remove;
 			}
 			else {
 				// Illegal move (trying to get more cubes than available).
-				am_msg.legal = 'b';
+				am_msg.legal = MOVE_ILLEGAL;
 			}
 		}
 		else {
 			// Illegal move (number of cubes to remove not positive).
-			am_msg.legal = 'b';
+			am_msg.legal = MOVE_ILLEGAL;
 		}
 
 		size = sizeof(am_msg);
@@ -169,7 +169,7 @@ int main(int argc , char** argv) {
 		// Checking if client won.
 		if (empty_piles(s_msg.n_a,s_msg.n_b,s_msg.n_c)) {
 			// Client won.
-			s_msg.winner = 'c'; // Letting the client know.
+			s_msg.winner = CLIENT_WIN; // Letting the client know.
 
 		}
 		else {
@@ -187,12 +187,12 @@ int main(int argc , char** argv) {
 			// Checking if server won.
 			if (empty_piles(s_msg.n_a,s_msg.n_b,s_msg.n_c)) {
 				// Server won.
-				s_msg.winner = 's'; // Letting the client know.
+				s_msg.winner = SERVER_WIN; // Letting the client know.
 			}
 		}
 	}
 	close(sockfd);
 	close(new_sock);
-	return ret_val==0 ? 0 : 1;
+	return (ret_val == 0) ? 0 : 1;
 }
 

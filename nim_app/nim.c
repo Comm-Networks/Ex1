@@ -34,8 +34,8 @@ int sendall(int sockfd,void* buff,int *len){
 
 
 int main(int argc , char** argv){
-	char * hostname = "localhost";
-	char* port="6444";
+	char * hostname = DEFAULT_HOST;
+	char* port = DEFAULT_PORT;
 	struct addrinfo  hints;
 	struct addrinfo * dest_addr , *rp;
 	int sockfd;
@@ -100,15 +100,15 @@ int main(int argc , char** argv){
 		}
 		printf("Heap A: %d\nHeap B: %d\nHeap C: %d\n", s_msg.n_a, s_msg.n_b, s_msg.n_c);
 
-		if (s_msg.winner!='n') {
-			char * winner = s_msg.winner=='c' ? "You" : "Server" ;
+		if (s_msg.winner != NO_WIN) {
+			char * winner = s_msg.winner == CLIENT_WIN ? "You" : "Server" ;
 			printf("%s win!\n",winner);
 			break;
 		}
 		else {
 			printf("Your turn:\n");
 			scanf(" %c %hd", &pile, &number); // Space before %c is to consume the newline char from the previous scanf.
-			if (pile=='Q'){
+			if (pile == QUIT_CHAR){
 				c_msg.heap_name=pile;
 				c_msg.num_cubes_to_remove=0;
 				//letting the server know we close the socket
@@ -132,12 +132,12 @@ int main(int argc , char** argv){
 				fprintf(stderr, "Client:failed to read from server\n");
 				break;
 			}
-			char * msg = am_msg.legal=='b' ? "Illegal move\n" : "Move accepted\n";
+			char * msg = am_msg.legal == MOVE_ILLEGAL ? "Illegal move\n" : "Move accepted\n";
 			printf("%s",msg);
 
 		}
 	}
 
 	close(sockfd);
-	return ret_val==0 ? 0 : 1;
+	return (ret_val == 0) ? 0 : 1;
 }
