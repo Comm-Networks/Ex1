@@ -118,16 +118,17 @@ int main(int argc , char** argv){
 				}
 				// Shutting down connection.
 				shutdown(sockfd, SHUT_WR);
-				char buf[1];
-				int shutdown_res = recv(sockfd, buf, 1, 0);
+				char buf;
+				int shutdown_res = recv(sockfd, &buf, 1, 0);
 		        if (shutdown_res < 0) {
 					fprintf(stderr, "Client:failed to write to server\n");
-		            exit(1);
-		        } else if (!shutdown_res) {
+		            return 1;
+		        }
+		        else if (!shutdown_res) {
 		        	close(sockfd);
-		        	exit(0);
-
-		        } else {
+		        	return 0;
+		        }
+		        else {
 		        	// Will not reach as the server will not send anything at this point.
 		        	break;
 		        }
@@ -146,7 +147,7 @@ int main(int argc , char** argv){
 				fprintf(stderr, "Client:failed to read from server\n");
 				break;
 			}
-			char * msg = am_msg.legal == MOVE_ILLEGAL ? "Illegal move\n" : "Move accepted\n";
+			char * msg = am_msg.legal == ILLEGAL_MOVE ? "Illegal move\n" : "Move accepted\n";
 			printf("%s",msg);
 
 		}

@@ -18,8 +18,8 @@
 #define SERVER_WIN 's'
 #define CLIENT_WIN 'c'
 #define NO_WIN 'n'
-#define MOVE_LEGAL 'g'
-#define MOVE_ILLEGAL 'b'
+#define LEGAL_MOVE 'g'
+#define ILLEGAL_MOVE 'b'
 
 
 

@@ -139,7 +139,7 @@ int main(int argc , char** argv) {
 			break;
 		}
 		// Do move.
-		am_msg.legal = MOVE_LEGAL;
+		am_msg.legal = LEGAL_MOVE;
 		if (c_msg.num_cubes_to_remove > 0) {
 			if ((c_msg.heap_name == PILE_A_CHAR) && (c_msg.num_cubes_to_remove <= s_msg.n_a)) {
 				s_msg.n_a -= c_msg.num_cubes_to_remove;
@@ -152,12 +152,12 @@ int main(int argc , char** argv) {
 			}
 			else {
 				// Illegal move (trying to get more cubes than available).
-				am_msg.legal = MOVE_ILLEGAL;
+				am_msg.legal = ILLEGAL_MOVE;
 			}
 		}
 		else {
 			// Illegal move (number of cubes to remove not positive).
-			am_msg.legal = MOVE_ILLEGAL;
+			am_msg.legal = ILLEGAL_MOVE;
 		}
 
 		size = sizeof(am_msg);
