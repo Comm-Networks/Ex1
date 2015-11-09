@@ -51,7 +51,7 @@ int main(int argc , char** argv) {
 
 	if (argc < 4) {
 		// Error.
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	// Initializing piles.
@@ -73,7 +73,7 @@ int main(int argc , char** argv) {
 	int status = getaddrinfo(hostname,port,&hints,&my_addr);
 	if (status!=0){
 		 printf("getaddrinfo error: %s\n", strerror(status));
-		 return 1;
+		 return EXIT_FAILURE;
 	}
 
 	// loop through all the results and connect to the first we can
@@ -82,7 +82,7 @@ int main(int argc , char** argv) {
 			continue;
 		}
 		//opening a new socket
-		sockfd = socket(hints.ai_family,hints.ai_socktype,hints.ai_protocol);
+		sockfd = socket(rp->ai_family,rp->ai_socktype,rp->ai_protocol);
 		if (sockfd==-1) {
 			continue;
 		}
@@ -95,14 +95,15 @@ int main(int argc , char** argv) {
 	 if (rp == NULL) {
 	        fprintf(stderr, "Server:failed to bind\n");
 	        close(sockfd);
-	        return 1;
+	        freeaddrinfo(my_addr);
+	        return EXIT_FAILURE;
 	    }
 	freeaddrinfo(my_addr);
 
 	if (listen(sockfd, 5)==-1) {
 		printf("problem while listening for an incoming call : %s\n",strerror(errno));
 		close(sockfd);
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	size = sizeof(struct sockaddr_in);
@@ -110,7 +111,7 @@ int main(int argc , char** argv) {
 	if (new_sock < 0) {
 		printf("problem while trying to accept incoming call : %s\n",strerror(errno));
 		close(sockfd);
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	int ret_val=0;
@@ -193,6 +194,6 @@ int main(int argc , char** argv) {
 	}
 	close(sockfd);
 	close(new_sock);
-	return (ret_val == 0) ? 0 : 1;
+	return (ret_val == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

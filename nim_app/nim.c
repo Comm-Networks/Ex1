@@ -62,7 +62,7 @@ int main(int argc , char** argv){
 	int status =getaddrinfo(hostname,port,&hints,&dest_addr);
 	if (status!=0){
 		 printf("getaddrinfo error: %s\n", strerror(status));
-		 return 1;
+		 return EXIT_FAILURE;
 	}
 
 	// loop through all the results and connect to the first we can
@@ -84,6 +84,7 @@ int main(int argc , char** argv){
 	 if (rp == NULL) {
 	        fprintf(stderr, "Client:failed to connect\n");
 	        close(sockfd);
+	        freeaddrinfo(dest_addr);
 	        exit(1);
 	    }
 	freeaddrinfo(dest_addr);
@@ -122,11 +123,11 @@ int main(int argc , char** argv){
 				int shutdown_res = recv(sockfd, &buf, 1, 0);
 		        if (shutdown_res < 0) {
 					fprintf(stderr, "Client:failed to write to server\n");
-		            return 1;
+		            return EXIT_FAILURE;
 		        }
 		        else if (!shutdown_res) {
 		        	close(sockfd);
-		        	return 0;
+		        	return EXIT_SUCCESS;
 		        }
 		        else {
 		        	// Will not reach as the server will not send anything at this point.
@@ -154,5 +155,5 @@ int main(int argc , char** argv){
 	}
 
 	close(sockfd);
-	return (ret_val == 0) ? 0 : 1;
+	return (ret_val == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
